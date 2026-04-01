@@ -98,21 +98,21 @@ footer{text-align:center;padding:1.5rem;font-size:.72rem;color:var(--muted);bord
 <section class="cards">
 <div class="card"><div class="lb">Total Spending</div><div class="vl" id="s1"></div></div>
 <div class="card"><div class="lb">Fiscal Years</div><div class="vl" id="s2"></div></div>
-<div class="card"><div class="lb">Countries/Regions</div><div class="vl" id="s3"></div></div>
+<div class="card"><div class="lb">Spending Destinations</div><div class="vl" id="s3"></div></div>
 <div class="card"><div class="lb">Recipient Orgs</div><div class="vl" id="s4"></div></div>
 <div class="card"><div class="lb">Bilateral</div><div class="vl" id="s5"></div><div class="nt" id="s5n"></div></div>
 <div class="card"><div class="lb">Multilateral</div><div class="vl" id="s6"></div><div class="nt" id="s6n"></div></div>
 </section>
 <section class="charts">
-<div class="chbox"><h3>Total Spending by Year</h3><canvas id="c1"></canvas></div>
-<div class="chbox"><h3>Top 15 Recipient Countries</h3><canvas id="c2"></canvas></div>
-<div class="chbox"><h3>Bilateral vs Multilateral</h3><canvas id="c3"></canvas></div>
-<div class="chbox"><h3>Top 15 Recipient Organizations</h3><canvas id="c4"></canvas></div>
+<div class="chbox"><h3 id="c1t">Total Spending by Year</h3><canvas id="c1"></canvas></div>
+<div class="chbox"><h3 id="c2t">Top 15 Spending Destinations</h3><canvas id="c2"></canvas></div>
+<div class="chbox"><h3 id="c3t">Bilateral vs Multilateral</h3><canvas id="c3"></canvas></div>
+<div class="chbox"><h3 id="c4t">Top 15 Recipient Organizations</h3><canvas id="c4"></canvas></div>
 </section>
 <section class="fsec">
 <div class="fhdr">Search &amp; Filter</div>
 <div class="spots">
-<button class="sbtn" data-p="top-countries">Top Countries</button>
+<button class="sbtn" data-p="top-countries">Top Destinations</button>
 <button class="sbtn" data-p="top-orgs">Top Recipients</button>
 <button class="sbtn" data-p="top-sectors">Top Sectors</button>
 <button class="sbtn" data-p="ukraine">Ukraine</button>
@@ -124,7 +124,7 @@ footer{text-align:center;padding:1.5rem;font-size:.72rem;color:var(--muted);bord
 <div class="fgrid">
 <div class="fg"><label>Fiscal Year</label><select id="fy"><option value="">All Years</option></select></div>
 <div class="fg"><label>Continent</label><select id="fcon"><option value="">All Continents</option></select></div>
-<div class="fg"><label>Country (press Enter)</label><input id="fc" placeholder="e.g. Ethiopia, Ukraine"></div>
+<div class="fg"><label>Spending Destination (press Enter)</label><input id="fc" placeholder="e.g. Ethiopia, Ukraine"></div>
 <div class="fg"><label>Recipient Org (press Enter)</label><input id="fo" placeholder="e.g. World Food Programme"></div>
 <div class="fg"><label>Sector / Purpose (press Enter)</label><input id="fs" placeholder="e.g. education, malaria"></div>
 <div class="fg"><label>Min Amount ($)</label><input type="number" id="fmn" placeholder="0" min="0"></div>
@@ -157,7 +157,7 @@ footer{text-align:center;padding:1.5rem;font-size:.72rem;color:var(--muted);bord
 <table>
 <thead><tr>
 <th data-c="yr">Year <span class="sa">&updownarrow;</span></th>
-<th data-c="country">Country <span class="sa">&updownarrow;</span></th>
+<th data-c="country">Spending Destination <span class="sa">&updownarrow;</span></th>
 <th data-c="continent">Continent <span class="sa">&updownarrow;</span></th>
 <th data-c="org">Recipient Org <span class="sa">&updownarrow;</span></th>
 <th data-c="sector">Sector / Purpose <span class="sa">&updownarrow;</span></th>
@@ -212,12 +212,12 @@ var cid=r.cid;
 var isReg=LK.regions&&LK.regions.indexOf(parseInt(cid))!==-1;
 return{
 yr:r.yr||'',
-country:LK.countries[r.cid]||'Unknown',
-continent:LK.continents[r.cnid]||'',
-org:LK.orgs[r.oid]||'Unknown',
+country:LK.countries[r.cid]||'Not specified',
+continent:LK.continents[r.cnid]||'Not specified',
+org:LK.orgs[r.oid]||'Not disclosed',
 orgType:LK.org_types[r.otid]||'',
 orgClass:LK.org_classes[r.ocid]||'',
-sector:LK.sectors[r.sid]||'Unknown',
+sector:LK.sectors[r.sid]||'Purpose not disclosed',
 amt:amt,
 bm:r.bm==='1'?'Bilateral':'Multilateral',
 cl:parseInt(r.cl)||0,
@@ -273,25 +273,36 @@ var csel=document.getElementById('fcon');
 Object.keys(cons).sort().forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;csel.appendChild(o)});
 }
 
-function charts(){
+var CH={};
+function charts(src){
+src=src||D;
 var cb=['#b82025','#c04448','#d4686b','#1a1a1a','#3a3a3a','#5a5a5a','#7a7a7a','#8a6e4e','#a08868','#b8a282','#6b6256','#887a6a','#a09888','#c8b89a','#ddd2c0'];
 Chart.defaults.font.family="'DM Sans',sans-serif";Chart.defaults.font.size=11;Chart.defaults.color='#6b6256';
+if(CH.c1)CH.c1.destroy();if(CH.c2)CH.c2.destroy();if(CH.c3)CH.c3.destroy();if(CH.c4)CH.c4.destroy();
+
+var selYr=document.getElementById('fy').value;
+var yrLabel=selYr?' \u2014 '+selYr:'';
+document.getElementById('c1t').textContent='Total Spending by Year';
+document.getElementById('c2t').textContent='Top 15 Spending Destinations'+yrLabel;
+document.getElementById('c3t').textContent='Bilateral vs Multilateral'+yrLabel;
+document.getElementById('c4t').textContent='Top 15 Recipient Organizations'+yrLabel;
 
 var ym={};D.forEach(function(r){ym[r.yr]=(ym[r.yr]||0)+r.amt});
 var yl=Object.keys(ym).sort();
-new Chart(document.getElementById('c1'),{type:'bar',data:{labels:yl,datasets:[{data:yl.map(function(y){return Math.round(ym[y])}),backgroundColor:'#b82025',borderRadius:2}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+c.parsed.y.toLocaleString()}}}},scales:{y:{ticks:{callback:function(v){return'$'+(v/1e9).toFixed(1)+'B'}},grid:{color:'#e8e2d8'}},x:{grid:{display:false}}}}});
+var ybg=yl.map(function(y){return selYr&&y===selYr?'#b82025':selYr?'#d4c4b0':'#b82025'});
+CH.c1=new Chart(document.getElementById('c1'),{type:'bar',data:{labels:yl,datasets:[{data:yl.map(function(y){return Math.round(ym[y])}),backgroundColor:ybg,borderRadius:2}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+c.parsed.y.toLocaleString()}}}},scales:{y:{ticks:{callback:function(v){return'$'+(v/1e9).toFixed(1)+'B'}},grid:{color:'#e8e2d8'}},x:{grid:{display:false}}}}});
 
-var cm={};D.forEach(function(r){if(r.country&&r.country!=='Not specified'&&r.country!=='Canada (domestic)'&&r.country!=='Unknown'&&!r.isRegion)cm[r.country]=(cm[r.country]||0)+r.amt});
+var cm={};src.forEach(function(r){if(r.country&&r.country!=='Not specified'&&r.country!=='Canada (domestic)'&&r.country!=='Not disclosed'&&!r.isRegion)cm[r.country]=(cm[r.country]||0)+r.amt});
 var ce=[];for(var k in cm)ce.push([k,cm[k]]);ce.sort(function(a,b){return b[1]-a[1]});ce=ce.slice(0,15);
-new Chart(document.getElementById('c2'),{type:'bar',data:{labels:ce.map(function(d){return d[0].length>25?d[0].substring(0,22)+'\u2026':d[0]}),datasets:[{data:ce.map(function(d){return Math.round(d[1])}),backgroundColor:cb}]},options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+c.parsed.x.toLocaleString()}}}},scales:{x:{ticks:{callback:function(v){return'$'+(v/1e9).toFixed(1)+'B'}},grid:{color:'#e8e2d8'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+CH.c2=new Chart(document.getElementById('c2'),{type:'bar',data:{labels:ce.map(function(d){return d[0].length>25?d[0].substring(0,22)+'\u2026':d[0]}),datasets:[{data:ce.map(function(d){return Math.round(d[1])}),backgroundColor:cb}]},options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+c.parsed.x.toLocaleString()}}}},scales:{x:{ticks:{callback:function(v){return v>=1e9?'$'+(v/1e9).toFixed(1)+'B':'$'+(v/1e6).toFixed(0)+'M'}},grid:{color:'#e8e2d8'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
 
-var biT=0,muT=0,biC=0,muC=0;
-D.forEach(function(r){if(r.bm==='Bilateral'){biT+=r.amt;biC++}else{muT+=r.amt;muC++}});
-new Chart(document.getElementById('c3'),{type:'doughnut',data:{labels:['Bilateral ($'+fmt(biT)+')','Multilateral ($'+fmt(muT)+')'],datasets:[{data:[Math.round(biT),Math.round(muT)],backgroundColor:['#1a1a1a','#b82025'],borderWidth:2,borderColor:'#fff'}]},options:{plugins:{legend:{position:'bottom',labels:{padding:16,font:{size:11}}},tooltip:{callbacks:{label:function(c){return c.label+': $'+c.parsed.toLocaleString()}}}}}});
+var biT=0,muT=0;
+src.forEach(function(r){if(r.bm==='Bilateral'){biT+=r.amt}else{muT+=r.amt}});
+CH.c3=new Chart(document.getElementById('c3'),{type:'doughnut',data:{labels:['Bilateral ($'+fmt(biT)+')','Multilateral ($'+fmt(muT)+')'],datasets:[{data:[Math.round(biT),Math.round(muT)],backgroundColor:['#1a1a1a','#b82025'],borderWidth:2,borderColor:'#fff'}]},options:{plugins:{legend:{position:'bottom',labels:{padding:16,font:{size:11}}},tooltip:{callbacks:{label:function(c){return c.label+': $'+c.parsed.toLocaleString()}}}}}});
 
-var om={};D.forEach(function(r){if(r.org)om[r.org]=(om[r.org]||0)+r.amt});
+var om={};src.forEach(function(r){if(r.org)om[r.org]=(om[r.org]||0)+r.amt});
 var oe=[];for(var k2 in om)oe.push([k2,om[k2]]);oe.sort(function(a,b){return b[1]-a[1]});oe=oe.slice(0,15);
-new Chart(document.getElementById('c4'),{type:'bar',data:{labels:oe.map(function(d){return d[0].length>35?d[0].substring(0,32)+'\u2026':d[0]}),datasets:[{data:oe.map(function(d){return Math.round(d[1])}),backgroundColor:cb}]},options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+c.parsed.x.toLocaleString()}}}},scales:{x:{ticks:{callback:function(v){return'$'+(v/1e9).toFixed(1)+'B'}},grid:{color:'#e8e2d8'}},y:{grid:{display:false},ticks:{font:{size:9}}}}}});
+CH.c4=new Chart(document.getElementById('c4'),{type:'bar',data:{labels:oe.map(function(d){return d[0].length>35?d[0].substring(0,32)+'\u2026':d[0]}),datasets:[{data:oe.map(function(d){return Math.round(d[1])}),backgroundColor:cb}]},options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+c.parsed.x.toLocaleString()}}}},scales:{x:{ticks:{callback:function(v){return v>=1e9?'$'+(v/1e9).toFixed(1)+'B':'$'+(v/1e6).toFixed(0)+'M'}},grid:{color:'#e8e2d8'}},y:{grid:{display:false},ticks:{font:{size:9}}}}}});
 }
 
 function apply(){
@@ -315,6 +326,8 @@ if(FA&&r[FA]<1)return false;
 return true;
 });
 doSort();CP=1;render();
+var chartData=yr?D.filter(function(r){return r.yr===yr}):D;
+charts(chartData);
 }
 
 function doSort(){F.sort(function(a,b){var av=a[SC],bv=b[SC];if(typeof av==='string')return SD*av.localeCompare(bv);return SD*(av-bv)})}
