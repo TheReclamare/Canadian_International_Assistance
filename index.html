@@ -119,6 +119,7 @@ footer{text-align:center;padding:1.5rem;font-size:.72rem;color:var(--muted);bord
 <button class="sbtn" data-p="climate">Climate Funding</button>
 <button class="sbtn" data-p="gender">Gender Equality</button>
 <button class="sbtn" data-p="humanitarian">Humanitarian</button>
+<button class="sbtn" data-p="refugee">Refugee Spending</button>
 </div>
 <div class="fgrid">
 <div class="fg"><label>Fiscal Year</label><select id="fy"><option value="">All Years</option></select></div>
@@ -181,7 +182,8 @@ footer{text-align:center;padding:1.5rem;font-size:.72rem;color:var(--muted);bord
 <p><strong>Bilateral</strong> spending represents direct funding from Canada to a specific country, project, or organization. The money trail is fully traceable.</p>
 <p><strong>Multilateral</strong> spending represents Canada&rsquo;s estimated share of how multilateral organizations (UN agencies, World Bank, etc.) allocated their funds. These are <em>imputed allocations</em> based on how those organizations report their own country-level spending &mdash; not direct Canadian payments to those countries.</p>
 <p><strong>Focus area markers</strong> use the OECD-DAC scoring system: 0 = not targeted, 1 = significant objective, 2 = principal objective. The filters show projects scored 1 or 2.</p>
-<p><strong>Where the trail goes cold:</strong> A small percentage of multilateral contributions (roughly 5%) remain &ldquo;Uncoded&rdquo; &mdash; meaning Canada sent funds to a multilateral organization but the final country destination cannot be determined from any published data.</p>
+<p><strong>Where the trail goes cold:</strong> A small percentage of multilateral contributions (roughly 5%) remain &ldquo;Not specified&rdquo; &mdash; meaning Canada sent funds to a multilateral organization but the final country destination cannot be determined from any published data.</p>
+<p><strong>Refugee spending in Canada:</strong> Approximately $6.4 billion over 8 years is classified as &ldquo;international assistance&rdquo; but was actually spent inside Canada on refugee resettlement &mdash; housing, healthcare, and settlement services. Under OECD rules, the first year of domestic refugee costs counts as foreign aid. These rows are labeled &ldquo;Canada (domestic)&rdquo; so you can see exactly how much of the international assistance budget stayed home.</p>
 <p>Source: <a href="https://www.international.gc.ca/transparency-transparence/international-assistance-report-stat-rapport-aide-internationale/index.aspx?lang=eng" target="_blank" rel="noopener">Global Affairs Canada &mdash; Historical Project Data Sets</a></p>
 <div class="disclaimer">
 <strong>Disclaimer:</strong> This is a personal project and is not affiliated with the Government of Canada. Data has been processed from original HPDS files for searchability. Multilateral country allocations are estimates, not direct payments. Always refer to the <a href="https://open.canada.ca/" target="_blank" rel="noopener">Government of Canada Open Data portal</a> for official records.
@@ -206,6 +208,8 @@ LK=lk;
 Papa.parse('hpds_data.csv',{download:true,header:true,skipEmptyLines:true,complete:function(results){
 D=results.data.map(function(r){
 var amt=parseFloat(r.amt)||0;
+var cid=r.cid;
+var isReg=LK.regions&&LK.regions.indexOf(parseInt(cid))!==-1;
 return{
 yr:r.yr||'',
 country:LK.countries[r.cid]||'Unknown',
@@ -224,7 +228,8 @@ ind:parseInt(r.ind)||0,
 dis:parseInt(r.dis)||0,
 gov:parseInt(r.gov)||0,
 tr:parseInt(r.tr)||0,
-hum:parseInt(r.hum)||0
+hum:parseInt(r.hum)||0,
+isRegion:isReg
 };
 }).filter(function(r){return r.amt!==0});
 document.getElementById('loadmsg').style.display='none';
@@ -276,7 +281,7 @@ var ym={};D.forEach(function(r){ym[r.yr]=(ym[r.yr]||0)+r.amt});
 var yl=Object.keys(ym).sort();
 new Chart(document.getElementById('c1'),{type:'bar',data:{labels:yl,datasets:[{data:yl.map(function(y){return Math.round(ym[y])}),backgroundColor:'#b82025',borderRadius:2}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+c.parsed.y.toLocaleString()}}}},scales:{y:{ticks:{callback:function(v){return'$'+(v/1e9).toFixed(1)+'B'}},grid:{color:'#e8e2d8'}},x:{grid:{display:false}}}}});
 
-var cm={};D.forEach(function(r){if(r.country&&r.country!=='Uncoded'&&r.country!=='Unknown')cm[r.country]=(cm[r.country]||0)+r.amt});
+var cm={};D.forEach(function(r){if(r.country&&r.country!=='Not specified'&&r.country!=='Canada (domestic)'&&r.country!=='Unknown'&&!r.isRegion)cm[r.country]=(cm[r.country]||0)+r.amt});
 var ce=[];for(var k in cm)ce.push([k,cm[k]]);ce.sort(function(a,b){return b[1]-a[1]});ce=ce.slice(0,15);
 new Chart(document.getElementById('c2'),{type:'bar',data:{labels:ce.map(function(d){return d[0].length>25?d[0].substring(0,22)+'\u2026':d[0]}),datasets:[{data:ce.map(function(d){return Math.round(d[1])}),backgroundColor:cb}]},options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+c.parsed.x.toLocaleString()}}}},scales:{x:{ticks:{callback:function(v){return'$'+(v/1e9).toFixed(1)+'B'}},grid:{color:'#e8e2d8'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
 
@@ -420,6 +425,7 @@ else if(p==='ukraine'){document.getElementById('fc').value='Ukraine';SC='amt';SD
 else if(p==='climate'){FA='cl';document.querySelectorAll('.tbtn.fa').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-f')==='cl')});SC='amt';SD=-1;}
 else if(p==='gender'){FA='ge';document.querySelectorAll('.tbtn.fa').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-f')==='ge')});SC='amt';SD=-1;}
 else if(p==='humanitarian'){FA='hum';document.querySelectorAll('.tbtn.fa').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-f')==='hum')});SC='amt';SD=-1;}
+else if(p==='refugee'){document.getElementById('fs').value='Refugee spending';SC='amt';SD=-1;}
 apply();
 }});
 
