@@ -292,7 +292,7 @@ var yl=Object.keys(ym).sort();
 var ybg=yl.map(function(y){return selYr&&y===selYr?'#b82025':selYr?'#d4c4b0':'#b82025'});
 CH.c1=new Chart(document.getElementById('c1'),{type:'bar',data:{labels:yl,datasets:[{data:yl.map(function(y){return Math.round(ym[y])}),backgroundColor:ybg,borderRadius:2}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+c.parsed.y.toLocaleString()}}}},scales:{y:{ticks:{callback:function(v){return'$'+(v/1e9).toFixed(1)+'B'}},grid:{color:'#e8e2d8'}},x:{grid:{display:false}}}}});
 
-var cm={};src.forEach(function(r){if(r.country&&r.country!=='Not specified'&&r.country!=='Canada (domestic)'&&r.country!=='Not disclosed'&&!r.isRegion)cm[r.country]=(cm[r.country]||0)+r.amt});
+var cm={};src.forEach(function(r){if(r.country&&r.country!=='Not specified'&&r.country!=='Not disclosed'&&!r.isRegion)cm[r.country]=(cm[r.country]||0)+r.amt});
 var ce=[];for(var k in cm)ce.push([k,cm[k]]);ce.sort(function(a,b){return b[1]-a[1]});ce=ce.slice(0,15);
 CH.c2=new Chart(document.getElementById('c2'),{type:'bar',data:{labels:ce.map(function(d){return d[0].length>25?d[0].substring(0,22)+'\u2026':d[0]}),datasets:[{data:ce.map(function(d){return Math.round(d[1])}),backgroundColor:cb}]},options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+c.parsed.x.toLocaleString()}}}},scales:{x:{ticks:{callback:function(v){return v>=1e9?'$'+(v/1e9).toFixed(1)+'B':'$'+(v/1e6).toFixed(0)+'M'}},grid:{color:'#e8e2d8'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
 
