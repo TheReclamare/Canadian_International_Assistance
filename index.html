@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Canadian International Assistance Spending</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700;900&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--ink:#1a1a1a;--paper:#f5f0e8;--rule:#c8b89a;--accent:#b82025;--accent-dark:#8a171b;--muted:#6b6256;--highlight:#fff3cd;--card:#fff;--shd:0 1px 3px rgba(0,0,0,.08),0 4px 12px rgba(0,0,0,.04)}
+body{font-family:'DM Sans',sans-serif;background:var(--paper);color:var(--ink);line-height:1.5;-webkit-font-smoothing:antialiased}
+.masthead{background:var(--ink);color:var(--paper);padding:2.5rem 2rem 2rem;text-align:center;border-bottom:4px double var(--accent)}
+.masthead-rule{width:80px;height:3px;background:var(--accent);margin:0 auto 1rem}
+.masthead h1{font-family:'Source Serif 4',Georgia,serif;font-weight:900;font-size:clamp(1.6rem,4vw,2.8rem);letter-spacing:-.02em;line-height:1.15;max-width:800px;margin:0 auto}
+.masthead .sub{font-size:.9rem;color:#a09888;margin-top:.75rem}
+.masthead .dl{display:inline-block;margin-top:1.25rem;padding:.5rem 1.25rem;border:1px solid var(--rule);color:var(--paper);text-decoration:none;font-size:.78rem;font-weight:600;letter-spacing:.05em;text-transform:uppercase;transition:all .2s}
+.masthead .dl:hover{background:var(--accent);border-color:var(--accent)}
+.wrap{max-width:1400px;margin:0 auto;padding:0 1.5rem}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:1rem;padding:2rem 0}
+.card{background:var(--card);padding:1.1rem 1.3rem;border-left:3px solid var(--accent);box-shadow:var(--shd)}
+.card .lb{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.card .vl{font-family:'Source Serif 4',serif;font-size:1.6rem;font-weight:700;margin-top:.2rem}
+.card .nt{font-size:.72rem;color:var(--muted);margin-top:.1rem}
+.charts{padding:1rem 0 2rem;display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.chbox{background:var(--card);padding:1.5rem;box-shadow:var(--shd)}
+.chbox h3{font-family:'Source Serif 4',serif;font-size:.95rem;font-weight:700;margin-bottom:.75rem;padding-bottom:.4rem;border-bottom:1px solid var(--rule)}
+.chbox canvas{max-height:280px}
+.fsec{padding:2rem 0 1rem}
+.fhdr{font-family:'Source Serif 4',serif;font-size:1.15rem;font-weight:700;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:2px solid var(--ink)}
+.spots{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1.25rem}
+.sbtn{padding:.4rem .85rem;font-size:.72rem;font-weight:600;font-family:'DM Sans',sans-serif;background:var(--ink);color:var(--paper);border:none;cursor:pointer;text-transform:uppercase;letter-spacing:.04em;transition:all .15s}
+.sbtn:hover,.sbtn.on{background:var(--accent)}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:1rem;margin-bottom:1rem}
+.fg label{display:block;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600;margin-bottom:.3rem}
+.fg input,.fg select{width:100%;padding:.5rem .7rem;font-family:'DM Sans',sans-serif;font-size:.84rem;border:1px solid var(--rule);background:var(--card);color:var(--ink);outline:none;transition:border-color .15s}
+.fg input:focus,.fg select:focus{border-color:var(--accent)}
+.trow{display:flex;align-items:center;gap:.75rem;margin-bottom:1rem;flex-wrap:wrap}
+.tbtn{padding:.35rem .8rem;font-size:.72rem;font-weight:600;font-family:'DM Sans',sans-serif;border:1px solid var(--rule);background:var(--card);color:var(--muted);cursor:pointer;transition:all .15s}
+.tbtn.on{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.clr{padding:.5rem 1.1rem;font-size:.78rem;font-weight:600;font-family:'DM Sans',sans-serif;border:1px solid var(--rule);background:var(--card);color:var(--muted);cursor:pointer;margin-bottom:1rem}
+.clr:hover{border-color:var(--accent);color:var(--accent)}
+.rc{font-size:.84rem;color:var(--muted);margin-bottom:.6rem;font-weight:500}
+.rc strong{color:var(--ink)}
+.note-enter{font-size:.72rem;color:var(--muted);font-style:italic;margin-bottom:1rem}
+.summary-bar{background:var(--card);padding:1rem 1.3rem;box-shadow:var(--shd);margin-bottom:1rem;display:flex;flex-wrap:wrap;gap:1.5rem;align-items:center}
+.summary-bar .sb-item{font-size:.82rem}
+.summary-bar .sb-item strong{font-family:'Source Serif 4',serif;font-size:1.1rem}
+.summary-bar .sb-label{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600}
+.tsec{padding:0 0 3rem}
+.tw{overflow-x:auto;background:var(--card);box-shadow:0 4px 16px rgba(0,0,0,.1);border:1px solid var(--rule)}
+table{width:100%;border-collapse:collapse;font-size:.78rem;min-width:900px}
+thead th{background:var(--ink);color:var(--paper);font-weight:600;text-transform:uppercase;letter-spacing:.04em;font-size:.66rem;padding:.7rem .5rem;text-align:left;position:sticky;top:0;cursor:pointer;white-space:nowrap;user-select:none}
+thead th:hover{background:#2a2a2a}
+thead th .sa{margin-left:3px;opacity:.35;font-size:.72rem}
+thead th.sorted{background:#2e1a1a}
+thead th.sorted .sa{opacity:1;color:#ff6b6b}
+tbody tr{border-bottom:1px solid #e8e2d8;transition:background .1s}
+tbody tr:hover{background:var(--highlight)}
+tbody td{padding:.55rem .5rem;vertical-align:top}
+td.n{font-family:'JetBrains Mono',monospace;font-size:.76rem;text-align:right;white-space:nowrap}
+td.dc{max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.dc:hover{white-space:normal}
+td.multi{color:var(--muted);font-style:italic}
+.tag{display:inline-block;padding:1px 5px;font-size:.62rem;font-weight:600;border-radius:2px;margin:1px;text-transform:uppercase;letter-spacing:.03em}
+.tag-bi{background:#e8f5e9;color:#2e7d32}
+.tag-mu{background:#fff3e0;color:#e65100}
+.tag-focus{background:#e3f2fd;color:#1565c0}
+.pg{display:flex;align-items:center;justify-content:center;gap:.5rem;padding:1rem;border-top:1px solid var(--rule);background:var(--card)}
+.pg button{padding:.35rem .7rem;font-size:.78rem;font-family:'DM Sans',sans-serif;font-weight:600;border:1px solid var(--rule);background:var(--card);cursor:pointer}
+.pg button:hover:not(:disabled){border-color:var(--accent);color:var(--accent)}
+.pg button:disabled{opacity:.3;cursor:default}
+.pg .pi{font-size:.78rem;color:var(--muted);margin:0 .4rem}
+.about{padding:2rem 0 3rem;max-width:700px;margin:0 auto;border-top:2px solid var(--ink)}
+.about h2{font-family:'Source Serif 4',serif;font-size:1.2rem;font-weight:700;margin:1.5rem 0 .6rem}
+.about p{font-size:.88rem;line-height:1.6;color:#444;margin-bottom:.65rem}
+.disclaimer{margin:1.25rem 0;padding:1rem 1.25rem;background:#fff3cd;border-left:3px solid #d4a017;font-size:.85rem;line-height:1.55;color:#5a4a00}
+.disclaimer a{color:var(--accent-dark);font-weight:600}
+.related{display:flex;flex-direction:column;gap:.6rem;margin-top:.5rem}
+.related a{display:block;padding:.65rem 1rem;background:var(--card);border:1px solid var(--rule);text-decoration:none;color:var(--ink);font-weight:600;font-size:.88rem;transition:all .15s}
+.related a:hover{border-color:var(--accent);color:var(--accent)}
+footer{text-align:center;padding:1.5rem;font-size:.72rem;color:var(--muted);border-top:1px solid var(--rule)}
+@media(max-width:768px){.charts{grid-template-columns:1fr}.fgrid{grid-template-columns:1fr 1fr}.cards{grid-template-columns:1fr 1fr}.summary-bar{flex-direction:column;gap:.5rem}}
+@media(max-width:500px){.fgrid{grid-template-columns:1fr}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header class="masthead">
+<div class="masthead-rule"></div>
+<h1>Canadian International Assistance Spending</h1>
+<p class="sub">$61 Billion across 265 Countries &amp; 6,600+ Recipients &mdash; 2015 to 2023</p>
+<a href="hpds_data.csv" download class="dl">&darr; Download Processed CSV</a>
+</header>
+<div id="loadmsg" style="text-align:center;padding:4rem 2rem;font-family:'Source Serif 4',serif;font-size:1.2rem;color:#6b6256"><div style="width:36px;height:36px;border:3px solid #c8b89a;border-top-color:#b82025;border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 1rem"></div>Loading 218,000+ international assistance records&hellip;</div>
+<style>@keyframes spin{to{transform:rotate(360deg)}}</style>
+<main class="wrap" id="app" style="display:none">
+<section class="cards">
+<div class="card"><div class="lb">Total Spending</div><div class="vl" id="s1"></div></div>
+<div class="card"><div class="lb">Fiscal Years</div><div class="vl" id="s2"></div></div>
+<div class="card"><div class="lb">Countries/Regions</div><div class="vl" id="s3"></div></div>
+<div class="card"><div class="lb">Recipient Orgs</div><div class="vl" id="s4"></div></div>
+<div class="card"><div class="lb">Bilateral</div><div class="vl" id="s5"></div><div class="nt" id="s5n"></div></div>
+<div class="card"><div class="lb">Multilateral</div><div class="vl" id="s6"></div><div class="nt" id="s6n"></div></div>
+</section>
+<section class="charts">
+<div class="chbox"><h3>Total Spending by Year</h3><canvas id="c1"></canvas></div>
+<div class="chbox"><h3>Top 15 Recipient Countries</h3><canvas id="c2"></canvas></div>
+<div class="chbox"><h3>Bilateral vs Multilateral</h3><canvas id="c3"></canvas></div>
+<div class="chbox"><h3>Top 15 Recipient Organizations</h3><canvas id="c4"></canvas></div>
+</section>
+<section class="fsec">
+<div class="fhdr">Search &amp; Filter</div>
+<div class="spots">
+<button class="sbtn" data-p="top-countries">Top Countries</button>
+<button class="sbtn" data-p="top-orgs">Top Recipients</button>
+<button class="sbtn" data-p="top-sectors">Top Sectors</button>
+<button class="sbtn" data-p="ukraine">Ukraine</button>
+<button class="sbtn" data-p="climate">Climate Funding</button>
+<button class="sbtn" data-p="gender">Gender Equality</button>
+<button class="sbtn" data-p="humanitarian">Humanitarian</button>
+</div>
+<div class="fgrid">
+<div class="fg"><label>Fiscal Year</label><select id="fy"><option value="">All Years</option></select></div>
+<div class="fg"><label>Continent</label><select id="fcon"><option value="">All Continents</option></select></div>
+<div class="fg"><label>Country (press Enter)</label><input id="fc" placeholder="e.g. Ethiopia, Ukraine"></div>
+<div class="fg"><label>Recipient Org (press Enter)</label><input id="fo" placeholder="e.g. World Food Programme"></div>
+<div class="fg"><label>Sector / Purpose (press Enter)</label><input id="fs" placeholder="e.g. education, malaria"></div>
+<div class="fg"><label>Min Amount ($)</label><input type="number" id="fmn" placeholder="0" min="0"></div>
+</div>
+<div class="trow">
+<span style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600">Channel:</span>
+<button class="tbtn ch on" data-g="all">All</button>
+<button class="tbtn ch" data-g="bi">Bilateral</button>
+<button class="tbtn ch" data-g="multi">Multilateral</button>
+</div>
+<div class="trow">
+<span style="font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);font-weight:600">Focus Area:</span>
+<button class="tbtn fa" data-f="cl">Climate</button>
+<button class="tbtn fa" data-f="env">Environment</button>
+<button class="tbtn fa" data-f="ge">Gender Equality</button>
+<button class="tbtn fa" data-f="cy">Children &amp; Youth</button>
+<button class="tbtn fa" data-f="ind">Indigenous</button>
+<button class="tbtn fa" data-f="dis">Disability</button>
+<button class="tbtn fa" data-f="gov">Governance</button>
+<button class="tbtn fa" data-f="tr">Trade</button>
+<button class="tbtn fa" data-f="hum">Humanitarian</button>
+</div>
+<button class="clr" id="clrbtn">Clear All Filters</button>
+<p class="note-enter">Text filters activate on Enter key. Large dataset &mdash; please allow a moment for results.</p>
+<div id="summbar" class="summary-bar" style="display:none"></div>
+<div class="rc" id="rc"></div>
+</section>
+<section class="tsec">
+<div class="tw">
+<table>
+<thead><tr>
+<th data-c="yr">Year <span class="sa">&updownarrow;</span></th>
+<th data-c="country">Country <span class="sa">&updownarrow;</span></th>
+<th data-c="continent">Continent <span class="sa">&updownarrow;</span></th>
+<th data-c="org">Recipient Org <span class="sa">&updownarrow;</span></th>
+<th data-c="sector">Sector / Purpose <span class="sa">&updownarrow;</span></th>
+<th data-c="amt">Amount ($) <span class="sa">&updownarrow;</span></th>
+<th data-c="bm">Channel <span class="sa">&updownarrow;</span></th>
+<th>Focus Areas</th>
+</tr></thead>
+<tbody id="tb"></tbody>
+</table>
+</div>
+<div class="pg">
+<button id="p1">&#171; First</button>
+<button id="pp">&#8249; Prev</button>
+<span class="pi" id="pi"></span>
+<button id="pn">Next &#8250;</button>
+<button id="pl">Last &#187;</button>
+</div>
+</section>
+<section class="about">
+<h2>About This Data</h2>
+<p>This dashboard presents 8 fiscal years (2015&ndash;2016 through 2022&ndash;2023) of Canadian international assistance spending, compiled from the Historical Project Data Sets (HPDS) published by Global Affairs Canada.</p>
+<p><strong>Bilateral</strong> spending represents direct funding from Canada to a specific country, project, or organization. The money trail is fully traceable.</p>
+<p><strong>Multilateral</strong> spending represents Canada&rsquo;s estimated share of how multilateral organizations (UN agencies, World Bank, etc.) allocated their funds. These are <em>imputed allocations</em> based on how those organizations report their own country-level spending &mdash; not direct Canadian payments to those countries.</p>
+<p><strong>Focus area markers</strong> use the OECD-DAC scoring system: 0 = not targeted, 1 = significant objective, 2 = principal objective. The filters show projects scored 1 or 2.</p>
+<p><strong>Where the trail goes cold:</strong> A small percentage of multilateral contributions (roughly 5%) remain &ldquo;Uncoded&rdquo; &mdash; meaning Canada sent funds to a multilateral organization but the final country destination cannot be determined from any published data.</p>
+<p>Source: <a href="https://www.international.gc.ca/transparency-transparence/international-assistance-report-stat-rapport-aide-internationale/index.aspx?lang=eng" target="_blank" rel="noopener">Global Affairs Canada &mdash; Historical Project Data Sets</a></p>
+<div class="disclaimer">
+<strong>Disclaimer:</strong> This is a personal project and is not affiliated with the Government of Canada. Data has been processed from original HPDS files for searchability. Multilateral country allocations are estimates, not direct payments. Always refer to the <a href="https://open.canada.ca/" target="_blank" rel="noopener">Government of Canada Open Data portal</a> for official records.
+</div>
+<h2>Related Projects</h2>
+<div class="related">
+<a href="https://thereclamare.github.io/Canadian-Government-Travel-Expenses/" target="_blank" rel="noopener">Canadian Government Travel Expenses</a>
+<a href="https://thereclamare.github.io/CDN_Govt_Spending/" target="_blank" rel="noopener">Canadian Federal Government Spending</a>
+<a href="https://thereclamare.github.io/CDN_Govt_Hospitality/" target="_blank" rel="noopener">Canadian Federal Government Hospitality Expenses</a>
+<a href="https://thereclamare.github.io/CDN_Tax_Break_Report/" target="_blank" rel="noopener">The Tax Break Report &mdash; Canada 2026</a>
+</div>
+</section>
+</main>
+<footer>Public accountability tool &mdash; Data from Global Affairs Canada HPDS open data files.</footer>
+<script>
+var LK={},D=[],F=[],CP=1,TP=1,PS=50,SC='amt',SD=-1,CF='all',FA='';
+var FOCUS_LABELS={cl:'Climate',env:'Environment',ge:'Gender',cy:'Children/Youth',ind:'Indigenous',dis:'Disability',gov:'Governance',tr:'Trade',hum:'Humanitarian'};
+
+function init(){
+fetch('hpds_lookups.json').then(function(r){return r.json()}).then(function(lk){
+LK=lk;
+Papa.parse('hpds_data.csv',{download:true,header:true,skipEmptyLines:true,complete:function(results){
+D=results.data.map(function(r){
+var amt=parseFloat(r.amt)||0;
+return{
+yr:r.yr||'',
+country:LK.countries[r.cid]||'Unknown',
+continent:LK.continents[r.cnid]||'',
+org:LK.orgs[r.oid]||'Unknown',
+orgType:LK.org_types[r.otid]||'',
+orgClass:LK.org_classes[r.ocid]||'',
+sector:LK.sectors[r.sid]||'Unknown',
+amt:amt,
+bm:r.bm==='1'?'Bilateral':'Multilateral',
+cl:parseInt(r.cl)||0,
+env:parseInt(r.env)||0,
+ge:parseInt(r.ge)||0,
+cy:parseInt(r.cy)||0,
+ind:parseInt(r.ind)||0,
+dis:parseInt(r.dis)||0,
+gov:parseInt(r.gov)||0,
+tr:parseInt(r.tr)||0,
+hum:parseInt(r.hum)||0
+};
+}).filter(function(r){return r.amt!==0});
+document.getElementById('loadmsg').style.display='none';
+document.getElementById('app').style.display='block';
+popFilters();summary();charts();apply();bindEvents();
+}});
+});
+}
+
+function summary(){
+var total=D.reduce(function(a,r){return a+r.amt},0);
+var yrs={},countries={},orgs={};
+var biTotal=0,muTotal=0;
+D.forEach(function(r){
+yrs[r.yr]=1;if(r.country)countries[r.country]=1;if(r.org)orgs[r.org]=1;
+if(r.bm==='Bilateral')biTotal+=r.amt;else muTotal+=r.amt;
+});
+document.getElementById('s1').textContent='$'+fmt(total);
+document.getElementById('s2').textContent=Object.keys(yrs).length;
+document.getElementById('s3').textContent=Object.keys(countries).length;
+document.getElementById('s4').textContent=Object.keys(orgs).length.toLocaleString();
+document.getElementById('s5').textContent='$'+fmt(biTotal);
+document.getElementById('s5n').textContent=((biTotal/total)*100).toFixed(0)+'% of total';
+document.getElementById('s6').textContent='$'+fmt(muTotal);
+document.getElementById('s6n').textContent=((muTotal/total)*100).toFixed(0)+'% of total';
+}
+
+function fmt(n){
+if(n>=1e9)return(n/1e9).toFixed(1)+'B';
+if(n>=1e6)return(n/1e6).toFixed(1)+'M';
+if(n>=1e3)return(n/1e3).toFixed(0)+'K';
+return Math.round(n).toLocaleString();
+}
+
+function popFilters(){
+var yrs={},cons={};
+D.forEach(function(r){if(r.yr)yrs[r.yr]=1;if(r.continent)cons[r.continent]=1});
+var ysel=document.getElementById('fy');
+Object.keys(yrs).sort().forEach(function(y){var o=document.createElement('option');o.value=y;o.textContent=y;ysel.appendChild(o)});
+var csel=document.getElementById('fcon');
+Object.keys(cons).sort().forEach(function(c){var o=document.createElement('option');o.value=c;o.textContent=c;csel.appendChild(o)});
+}
+
+function charts(){
+var cb=['#b82025','#c04448','#d4686b','#1a1a1a','#3a3a3a','#5a5a5a','#7a7a7a','#8a6e4e','#a08868','#b8a282','#6b6256','#887a6a','#a09888','#c8b89a','#ddd2c0'];
+Chart.defaults.font.family="'DM Sans',sans-serif";Chart.defaults.font.size=11;Chart.defaults.color='#6b6256';
+
+var ym={};D.forEach(function(r){ym[r.yr]=(ym[r.yr]||0)+r.amt});
+var yl=Object.keys(ym).sort();
+new Chart(document.getElementById('c1'),{type:'bar',data:{labels:yl,datasets:[{data:yl.map(function(y){return Math.round(ym[y])}),backgroundColor:'#b82025',borderRadius:2}]},options:{plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+c.parsed.y.toLocaleString()}}}},scales:{y:{ticks:{callback:function(v){return'$'+(v/1e9).toFixed(1)+'B'}},grid:{color:'#e8e2d8'}},x:{grid:{display:false}}}}});
+
+var cm={};D.forEach(function(r){if(r.country&&r.country!=='Uncoded'&&r.country!=='Unknown')cm[r.country]=(cm[r.country]||0)+r.amt});
+var ce=[];for(var k in cm)ce.push([k,cm[k]]);ce.sort(function(a,b){return b[1]-a[1]});ce=ce.slice(0,15);
+new Chart(document.getElementById('c2'),{type:'bar',data:{labels:ce.map(function(d){return d[0].length>25?d[0].substring(0,22)+'\u2026':d[0]}),datasets:[{data:ce.map(function(d){return Math.round(d[1])}),backgroundColor:cb}]},options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+c.parsed.x.toLocaleString()}}}},scales:{x:{ticks:{callback:function(v){return'$'+(v/1e9).toFixed(1)+'B'}},grid:{color:'#e8e2d8'}},y:{grid:{display:false},ticks:{font:{size:10}}}}}});
+
+var biT=0,muT=0,biC=0,muC=0;
+D.forEach(function(r){if(r.bm==='Bilateral'){biT+=r.amt;biC++}else{muT+=r.amt;muC++}});
+new Chart(document.getElementById('c3'),{type:'doughnut',data:{labels:['Bilateral ($'+fmt(biT)+')','Multilateral ($'+fmt(muT)+')'],datasets:[{data:[Math.round(biT),Math.round(muT)],backgroundColor:['#1a1a1a','#b82025'],borderWidth:2,borderColor:'#fff'}]},options:{plugins:{legend:{position:'bottom',labels:{padding:16,font:{size:11}}},tooltip:{callbacks:{label:function(c){return c.label+': $'+c.parsed.toLocaleString()}}}}}});
+
+var om={};D.forEach(function(r){if(r.org)om[r.org]=(om[r.org]||0)+r.amt});
+var oe=[];for(var k2 in om)oe.push([k2,om[k2]]);oe.sort(function(a,b){return b[1]-a[1]});oe=oe.slice(0,15);
+new Chart(document.getElementById('c4'),{type:'bar',data:{labels:oe.map(function(d){return d[0].length>35?d[0].substring(0,32)+'\u2026':d[0]}),datasets:[{data:oe.map(function(d){return Math.round(d[1])}),backgroundColor:cb}]},options:{indexAxis:'y',plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return'$'+c.parsed.x.toLocaleString()}}}},scales:{x:{ticks:{callback:function(v){return'$'+(v/1e9).toFixed(1)+'B'}},grid:{color:'#e8e2d8'}},y:{grid:{display:false},ticks:{font:{size:9}}}}}});
+}
+
+function apply(){
+var yr=document.getElementById('fy').value;
+var con=document.getElementById('fcon').value;
+var cty=document.getElementById('fc').value.toLowerCase();
+var org=document.getElementById('fo').value.toLowerCase();
+var sec=document.getElementById('fs').value.toLowerCase();
+var mn=parseFloat(document.getElementById('fmn').value)||0;
+
+F=D.filter(function(r){
+if(yr&&r.yr!==yr)return false;
+if(con&&r.continent!==con)return false;
+if(cty&&r.country.toLowerCase().indexOf(cty)===-1)return false;
+if(org&&r.org.toLowerCase().indexOf(org)===-1)return false;
+if(sec&&r.sector.toLowerCase().indexOf(sec)===-1)return false;
+if(r.amt<mn)return false;
+if(CF==='bi'&&r.bm!=='Bilateral')return false;
+if(CF==='multi'&&r.bm!=='Multilateral')return false;
+if(FA&&r[FA]<1)return false;
+return true;
+});
+doSort();CP=1;render();
+}
+
+function doSort(){F.sort(function(a,b){var av=a[SC],bv=b[SC];if(typeof av==='string')return SD*av.localeCompare(bv);return SD*(av-bv)})}
+
+function render(){
+var st=(CP-1)*PS,pg=F.slice(st,st+PS);
+TP=Math.max(1,Math.ceil(F.length/PS));
+var fs=F.reduce(function(a,r){return a+r.amt},0);
+var biFs=F.reduce(function(a,r){return r.bm==='Bilateral'?a+r.amt:a},0);
+var muFs=fs-biFs;
+
+document.getElementById('rc').innerHTML='Showing <strong>'+F.length.toLocaleString()+'</strong> records &mdash; Total: <strong>$'+Math.round(fs).toLocaleString()+'</strong>';
+
+var sb=document.getElementById('summbar');
+if(F.length<D.length&&F.length>0){
+sb.style.display='flex';
+sb.innerHTML='<div class="sb-item"><div class="sb-label">Filtered Total</div><strong>$'+Math.round(fs).toLocaleString()+'</strong></div>'+
+'<div class="sb-item"><div class="sb-label">Bilateral (traceable)</div><strong>$'+Math.round(biFs).toLocaleString()+'</strong></div>'+
+'<div class="sb-item"><div class="sb-label">Multilateral (estimated)</div><strong>$'+Math.round(muFs).toLocaleString()+'</strong></div>'+
+'<div class="sb-item"><div class="sb-label">Records</div><strong>'+F.length.toLocaleString()+'</strong></div>';
+}else{sb.style.display='none'}
+
+var h='';
+for(var i=0;i<pg.length;i++){
+var r=pg[i];
+var bmTag=r.bm==='Bilateral'?'<span class="tag tag-bi">Bilateral</span>':'<span class="tag tag-mu">Multilateral</span>';
+var tags=[];
+if(r.cl>=1)tags.push('Climate');
+if(r.env>=1)tags.push('Environment');
+if(r.ge>=1)tags.push('Gender');
+if(r.cy>=1)tags.push('Children/Youth');
+if(r.ind>=1)tags.push('Indigenous');
+if(r.dis>=1)tags.push('Disability');
+if(r.gov>=1)tags.push('Governance');
+if(r.tr>=1)tags.push('Trade');
+if(r.hum>=1)tags.push('Humanitarian');
+var tagStr=tags.map(function(t){return'<span class="tag tag-focus">'+t+'</span>'}).join(' ');
+
+h+='<tr>'+
+'<td>'+esc(r.yr)+'</td>'+
+'<td>'+esc(r.country)+'</td>'+
+'<td>'+esc(r.continent)+'</td>'+
+'<td class="dc" title="'+esc(r.org)+'">'+esc(r.org)+'</td>'+
+'<td class="dc" title="'+esc(r.sector)+'">'+esc(r.sector)+'</td>'+
+'<td class="n">$'+Math.round(r.amt).toLocaleString()+'</td>'+
+'<td>'+bmTag+'</td>'+
+'<td>'+tagStr+'</td>'+
+'</tr>';
+}
+document.getElementById('tb').innerHTML=h;
+document.getElementById('pi').textContent='Page '+CP+' of '+TP.toLocaleString();
+document.getElementById('p1').disabled=CP<=1;
+document.getElementById('pp').disabled=CP<=1;
+document.getElementById('pn').disabled=CP>=TP;
+document.getElementById('pl').disabled=CP>=TP;
+document.querySelectorAll('thead th').forEach(function(th){
+var c=th.getAttribute('data-c');
+var sa=th.querySelector('.sa');
+if(c===SC){th.classList.add('sorted');if(sa)sa.innerHTML=SD===-1?'&darr;':'&uarr;';}
+else{th.classList.remove('sorted');if(sa)sa.innerHTML='&updownarrow;';}
+});
+}
+
+function esc(s){var d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function goP(n){CP=Math.max(1,Math.min(n,TP));render();document.querySelector('.tw').scrollIntoView({behavior:'smooth',block:'start'})}
+
+function clearF(silent){
+document.getElementById('fy').value='';
+document.getElementById('fcon').value='';
+['fc','fo','fs','fmn'].forEach(function(id){document.getElementById(id).value=''});
+CF='all';FA='';
+document.querySelectorAll('.tbtn.ch').forEach(function(b){b.classList.toggle('on',b.getAttribute('data-g')==='all')});
+document.querySelectorAll('.tbtn.fa').forEach(function(b){b.classList.remove('on')});
+document.querySelectorAll('.sbtn').forEach(function(b){b.classList.remove('on')});
+SC='amt';SD=-1;
+if(!silent)apply();
+}
+
+function bindEvents(){
+document.getElementById('p1').onclick=function(){goP(1)};
+document.getElementById('pp').onclick=function(){goP(CP-1)};
+document.getElementById('pn').onclick=function(){goP(CP+1)};
+document.getElementById('pl').onclick=function(){goP(TP)};
+document.getElementById('clrbtn').onclick=function(){clearF()};
+
+document.querySelectorAll('.tbtn.ch').forEach(function(b){b.onclick=function(){
+CF=this.getAttribute('data-g');
+document.querySelectorAll('.tbtn.ch').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-g')===CF)});
+apply();
+}});
+
+document.querySelectorAll('.tbtn.fa').forEach(function(b){b.onclick=function(){
+var f=this.getAttribute('data-f');
+if(FA===f){FA='';this.classList.remove('on')}
+else{FA=f;document.querySelectorAll('.tbtn.fa').forEach(function(x){x.classList.remove('on')});this.classList.add('on')}
+apply();
+}});
+
+document.querySelectorAll('.sbtn').forEach(function(b){b.onclick=function(){
+clearF(true);
+document.querySelectorAll('.sbtn').forEach(function(x){x.classList.remove('on')});
+this.classList.add('on');
+var p=this.getAttribute('data-p');
+if(p==='top-countries'){SC='amt';SD=-1;}
+else if(p==='top-orgs'){SC='amt';SD=-1;}
+else if(p==='top-sectors'){SC='amt';SD=-1;}
+else if(p==='ukraine'){document.getElementById('fc').value='Ukraine';SC='amt';SD=-1;}
+else if(p==='climate'){FA='cl';document.querySelectorAll('.tbtn.fa').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-f')==='cl')});SC='amt';SD=-1;}
+else if(p==='gender'){FA='ge';document.querySelectorAll('.tbtn.fa').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-f')==='ge')});SC='amt';SD=-1;}
+else if(p==='humanitarian'){FA='hum';document.querySelectorAll('.tbtn.fa').forEach(function(x){x.classList.toggle('on',x.getAttribute('data-f')==='hum')});SC='amt';SD=-1;}
+apply();
+}});
+
+document.querySelectorAll('thead th').forEach(function(th){th.onclick=function(){
+var c=this.getAttribute('data-c');if(!c)return;
+if(SC===c)SD*=-1;else{SC=c;SD=(c==='amt')?-1:1;}
+doSort();CP=1;render();
+}});
+
+['fc','fo','fs'].forEach(function(id){
+document.getElementById(id).addEventListener('keydown',function(e){if(e.key==='Enter')apply()});
+});
+['fmn'].forEach(function(id){
+document.getElementById(id).addEventListener('keydown',function(e){if(e.key==='Enter')apply()});
+});
+['fy','fcon'].forEach(function(id){document.getElementById(id).addEventListener('change',apply)});
+}
+
+init();
+</script>
+</body>
+</html>
